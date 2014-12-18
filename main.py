@@ -22,7 +22,11 @@ class ChangelogHandler(webapp2.RequestHandler):
             stage = 0
             output = []
             date_found = False
-            for line in thread.split("\n"):
+            if "\r\n" in thread:
+                sep = "\r\n"
+            else:
+                sep = "\n"
+            for line in thread.split(sep):
                 if stage == 0:
                     if line == '<font size="5"><b>Changelog</b></font><br />':
                         stage = 1
