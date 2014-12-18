@@ -5,7 +5,7 @@ from google.appengine.api import memcache
 
 MEMCACHE_KEY_XML = "xml_41223"
 MEMCACHE_KEY_THREAD = "thread_41223"
-MEMCACHE_TIMEOUT = 5 * 60  # 5 minutes
+MEMCACHE_TIMEOUT = 20 * 60  # 20 minutes
 
 
 def get_folder_info(device):
