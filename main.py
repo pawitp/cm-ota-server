@@ -69,7 +69,7 @@ class ApiHandler(webapp2.RedirectHandler):
                     'incremental': build_id,
                     'api_level': 21,
                     'url': f.find('direct_download_url').text,
-                    'timestamp': datetime.strptime(f.find('created').text, "%Y-%m-%d %H:%M:%S").strftime("%s"),
+                    'timestamp': backend.timestamp_from_build_date(date),
                     'md5sum': f.find('md5sum').text,
                     'changes': 'https://%s/changelog/%s' % (os.environ['HTTP_HOST'], build_id),
                     'channel': 'nightly',
@@ -108,7 +108,7 @@ class DeltaHandler(webapp2.RedirectHandler):
                     'filename': filename,
                     'download_url': f.find('direct_download_url').text,
                     'md5sum': f.find('md5sum').text,
-                    'date_created_unix': datetime.strptime(f.find('created').text, "%Y-%m-%d %H:%M:%S").strftime("%s"),
+                    'date_created_unix': backend.timestamp_from_build_date(target_date),
                     'incremental': req['target_incremental'],
                 }
                 break

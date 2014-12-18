@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import urllib2
 from google.appengine.api import memcache
@@ -30,3 +31,7 @@ def _fetch_memcache(url, cache_key):
     logging.info("Fetching:" + url)
     memcache.add(key=cache_key, value=data, time=MEMCACHE_TIMEOUT)
     return data
+
+
+def timestamp_from_build_date(build_date):
+    return datetime.strptime(build_date, "%Y%m%d").strftime("%s")
