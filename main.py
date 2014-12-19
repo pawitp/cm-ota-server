@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import webapp2
-from datetime import datetime
 from xml.etree import ElementTree
 import backend
 
@@ -22,29 +21,28 @@ class ChangelogHandler(webapp2.RequestHandler):
             stage = 0
             output = []
             date_found = False
-            if "\r\n" in thread:
-                sep = "\r\n"
-            else:
-                sep = "\n"
-            for line in thread.split(sep):
-                if stage == 0:
-                    if line == '<font size="5"><b>Changelog</b></font><br />':
-                        stage = 1
-                elif stage == 1:
-                    if line == "<br />":
-                        break
-                    line_date = int(line.split(":")[0])
-                    if line_date > date:
-                        # Future build
-                        continue
-                    elif line_date == date:
-                        date_found = True
-                    output.append(line)
-                    if len(output) > 10:
-                        break
+
+            start_str = '<font size="5"><b>Changelog</b></font><br />'
+            end_str = '<font size="5"><b>FAQ</b></font><br />'
+            changelog = thread[thread.index(start_str) + len(start_str):thread.index(end_str)]
+            changelog = changelog.replace("\n", "")
+            changelog = changelog.replace("\r", "")
+            for line in changelog.split("<br />"):
+                if len(line) == 0:
+                    continue
+
+                line_date = int(line.split(":")[0])
+                if line_date > date:
+                    # Future build
+                    continue
+                elif line_date == date:
+                    date_found = True
+                output.append(line)
+                if len(output) > 10:
+                    break
             if not date_found:
                 raise Exception("No change log found for date %d." % date)
-            self.response.write("\n".join(output))
+            self.response.write("\n\n".join(output))
         except Exception, e:
             self.response.write("Change log not available.\n" + str(e))
 
