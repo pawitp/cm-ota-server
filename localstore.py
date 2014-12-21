@@ -23,7 +23,8 @@ def get_file(filename):
             return 'http://%s/_ah/gcs%s' % (os.environ['HTTP_HOST'], gcs_filename)
         else:
             return 'http://storage.googleapis.com%s' % gcs_filename
-    except gcs.errors.NotFoundError, e:
+    except gcs.errors.Error, e:
+        logging.error("Unable to query GCS " + str(e))
         return None
 
 
