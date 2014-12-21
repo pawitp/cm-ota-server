@@ -12,7 +12,7 @@ class CacheHandler(webapp2.RequestHandler):
 
         # XXX: memcache as pseudo-mutex
         key = 'fetch:' + filename
-        if memcache.get(key):
+        if memcache.get(key) or localstore.get_file(filename):
             logging.debug("Not caching " + filename)
         else:
             memcache.add(key=key, value=1, time=600)  # Try again in 10 minutes if fail
