@@ -2,9 +2,11 @@
 import json
 import logging
 import os
+from google.appengine.api.taskqueue import taskqueue
 import webapp2
 from xml.etree import ElementTree
 import backend
+import localstore
 
 
 class MainHandler(webapp2.RequestHandler):
@@ -47,7 +49,7 @@ class ChangelogHandler(webapp2.RequestHandler):
             self.response.write("Change log not available.\n" + str(e))
 
 
-class ApiHandler(webapp2.RedirectHandler):
+class ApiHandler(webapp2.RequestHandler):
     def post(self):
         try:
             req = json.loads(self.request.body)
@@ -87,7 +89,7 @@ class ApiHandler(webapp2.RedirectHandler):
             self.response.write(json.dumps({'id': None, 'error': str(e)}))
 
 
-class DeltaHandler(webapp2.RedirectHandler):
+class DeltaHandler(webapp2.RequestHandler):
     def post(self):
         try:
             req = json.loads(self.request.body)
@@ -106,10 +108,21 @@ class DeltaHandler(webapp2.RedirectHandler):
                 if filename != target_file:
                     continue
 
+                md5sum = f.find('md5sum').text
+
+                # Check local GCS bucket
+                download_url = localstore.get_file(filename)
+                if not download_url:
+                    download_url = f.find('direct_download_url').text
+                    taskqueue.add(url='/tasks/cache',
+                                  params={'filename': filename, 'url': download_url, 'md5sum': md5sum})
+
+                logging.info("Returning: " + download_url)
+
                 info = {
                     'filename': filename,
-                    'download_url': f.find('direct_download_url').text,
-                    'md5sum': f.find('md5sum').text,
+                    'download_url': download_url,
+                    'md5sum': md5sum,
                     'date_created_unix': backend.timestamp_from_build_date(target_date),
                     'incremental': req['target_incremental'],
                 }
