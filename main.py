@@ -46,6 +46,7 @@ class ChangelogHandler(webapp2.RequestHandler):
                 raise Exception("No change log found for date %d." % date)
             self.response.write("\n\n".join(output))
         except Exception, e:
+            logging.error("Exception " + str(e))
             self.response.write("Change log not available.\n" + str(e))
 
 
@@ -86,6 +87,7 @@ class ApiHandler(webapp2.RequestHandler):
             }
             self.response.write(json.dumps(result))
         except Exception, e:
+            logging.error("Exception " + str(e))
             self.response.write(json.dumps({'id': None, 'error': str(e)}))
 
 
@@ -130,6 +132,7 @@ class DeltaHandler(webapp2.RequestHandler):
 
             self.response.write(json.dumps(info))
         except Exception, e:
+            logging.error("Exception " + str(e))
             self.response.write(json.dumps({'errors': str(e)}))
 
 
