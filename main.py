@@ -2,10 +2,7 @@
 import json
 import logging
 import os
-from google.appengine.api import memcache
-from google.appengine.api.blobstore import blobstore
 from google.appengine.api.taskqueue import taskqueue
-from google.appengine.ext.webapp import blobstore_handlers
 import webapp2
 from xml.etree import ElementTree
 import backend
@@ -51,24 +48,6 @@ class ChangelogHandler(webapp2.RequestHandler):
         except Exception, e:
             logging.error("Exception " + str(e))
             self.response.write("Change log not available.\n" + str(e))
-
-
-class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
-    def get(self, filename):
-        try:
-            if not localstore.get_file(filename):
-                self.error(404)
-                self.response.out.write("Not Found")
-                return
-
-            memcache_key = 'gs:' + filename
-            blob_key = memcache.get(memcache_key)
-            if not blob_key:
-                blob_key = blobstore.create_gs_key('/gs' + localstore.get_gcs_filename(filename))
-                memcache.add(key=memcache_key, value=blob_key, time=864000)
-            self.send_blob(blob_key, save_as=filename)
-        except Exception, e:
-            logging.error("Exception " + str(e))
 
 
 class ApiHandler(webapp2.RequestHandler):
@@ -162,5 +141,4 @@ app = webapp2.WSGIApplication([
     webapp2.Route('/changelog/<build_id>', handler=ChangelogHandler),
     ('/api', ApiHandler),
     ('/api/v1/build/get_delta', DeltaHandler),
-    webapp2.Route('/dl/<filename>', handler=DownloadHandler),
 ], debug=True)
