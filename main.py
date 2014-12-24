@@ -2,7 +2,6 @@
 import json
 import logging
 import os
-from google.appengine.api.taskqueue import taskqueue
 import webapp2
 from xml.etree import ElementTree
 import backend
@@ -116,8 +115,6 @@ class DeltaHandler(webapp2.RequestHandler):
                 download_url = localstore.get_file(filename)
                 if not download_url:
                     download_url = f.find('direct_download_url').text
-                    taskqueue.add(url='/tasks/cache',
-                                  params={'filename': filename, 'url': download_url, 'md5sum': md5sum})
 
                 logging.info("Returning: " + download_url)
 
