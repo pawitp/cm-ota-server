@@ -9,20 +9,21 @@ import cloudstorage as gcs
 GCS_BUCKET = app_identity.get_default_gcs_bucket_name()
 
 
-def _get_gcs_filename(filename):
+def get_gcs_filename(filename):
     return '/%s/%s' % (GCS_BUCKET, filename)
 
 
 def get_file(filename):
     try:
-        gcs_filename = _get_gcs_filename(filename)
+        gcs_filename = get_gcs_filename(filename)
 
         # Check existence (will throw Error if not found)
         gcs.stat(gcs_filename)
         if os.environ['SERVER_SOFTWARE'].startswith('Development'):
-            return 'http://%s/_ah/gcs%s' % (os.environ['HTTP_HOST'], gcs_filename)
+            return 'http://%s/dl/%s' % (os.environ['HTTP_HOST'], filename)
         else:
-            return 'http://storage.googleapis.com%s' % gcs_filename
+            # return 'http://storage.googleapis.com%s' % gcs_filename
+            return 'http://cm-dl.pawitp.net/dl/%s' % filename
     except gcs.errors.Error, e:
         logging.error("Unable to query GCS " + str(e))
         return None
@@ -30,7 +31,7 @@ def get_file(filename):
 
 def try_cache(filename, url, md5sum):
     logging.info("Trying to cache " + url)
-    gcs_filename = _get_gcs_filename(filename)
+    gcs_filename = get_gcs_filename(filename)
 
     urlfetch.set_default_fetch_deadline(60)
     response = urllib2.urlopen(url)
