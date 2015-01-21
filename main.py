@@ -69,10 +69,14 @@ class ApiHandler(webapp2.RequestHandler):
                 rom, version, date, channel, device = filename.strip(".zip").split("-")
                 build_id = 'pawitp.%s.%s-%s.%s' % (device, rom, version, date)
 
+                download_url = localstore.get_file(filename)
+                if not download_url:
+                    download_url = f.find('direct_download_url').text
+
                 info.append({
                     'incremental': build_id,
                     'api_level': 21,
-                    'url': f.find('direct_download_url').text,
+                    'url': download_url,
                     'timestamp': backend.timestamp_from_build_date(date),
                     'md5sum': f.find('md5sum').text,
                     'changes': 'https://%s/changelog/%s' % (os.environ['HTTP_HOST'], build_id),
