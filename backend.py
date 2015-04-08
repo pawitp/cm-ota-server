@@ -3,26 +3,47 @@ import logging
 import urllib2
 from google.appengine.api import memcache
 
-MEMCACHE_KEY_XML = "xml_41223"
-MEMCACHE_KEY_THREAD = "thread_41223"
 MEMCACHE_TIMEOUT = 20 * 60  # 20 minutes
 
 
-def get_folder_info(device):
-    if device != "i9082":
-        raise Exception("Invalid device")
+def extract_version(rev):
+    # pawitp.i9082.cm-12.20141216
+    vendor, device, rom, date = rev.split(".")
 
-    return _fetch_memcache('http://d-h.st/api/folder/content?folder_id=41223', MEMCACHE_KEY_XML)
+    if date == "20150404" and rom == "cm-12":
+        # SPECIAL CASE: problem in distributed build (which was actually dated 20150405 on the outside)
+        date = "20150405"
+        rom = "cm-12-1"
+
+    return vendor, device, rom, date
+
+
+def get_folder_info(device, rom):
+    if device != "i9082":
+        raise Exception("Unknown device")
+
+    if rom == "cm-12":
+        return _fetch_memcache('http://d-h.st/api/folder/content?folder_id=41223')
+    elif rom == "cm-12-1":
+        return _fetch_memcache('http://d-h.st/api/folder/content?folder_id=44634')
+    else:
+        raise Exception("Unknown version")
 
 
 def get_thread(device, rom):
-    if device != "i9082" or rom != "cm-12":
-        raise Exception("Unknown device or version")
+    if device != "i9082":
+        raise Exception("Unknown device")
 
-    return _fetch_memcache('http://forum.xda-developers.com/galaxy-grand-duos/development/rom-cm-12-0-galaxy-grand-duos-i9082-t2942255', MEMCACHE_KEY_THREAD)
+    if rom == "cm-12":
+        return _fetch_memcache('http://forum.xda-developers.com/galaxy-grand-duos/development/rom-cm-12-0-galaxy-grand-duos-i9082-t2942255')
+    elif rom == "cm-12-1":
+        return _fetch_memcache('http://forum.xda-developers.com/galaxy-grand-duos/development/rom-cm-12-1-galaxy-grand-duos-i9082-t3073108')
+    else:
+        raise Exception("Unknown version")
 
 
-def _fetch_memcache(url, cache_key):
+def _fetch_memcache(url):
+    cache_key = "url:%s" % url
     data = memcache.get(cache_key)
     if data:
         return data

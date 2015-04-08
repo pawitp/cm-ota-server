@@ -56,7 +56,8 @@ class ApiHandler(webapp2.RequestHandler):
             if req['method'] != "get_all_builds":
                 raise Exception("Unknown method")
 
-            xml_str = backend.get_folder_info(req['params']['device'])
+            vendor, device, rom, date = backend.extract_version(req['params']['source_incremental'])
+            xml_str = backend.get_folder_info(device, rom)
             xml = ElementTree.ElementTree(ElementTree.fromstring(xml_str))
             info = []
             for f in xml.findall(".//file_info"):
@@ -67,6 +68,7 @@ class ApiHandler(webapp2.RequestHandler):
                     continue
 
                 rom, version, date, channel, device = filename.strip(".zip").split("-")
+                version = version.replace(".", "-")
                 build_id = 'pawitp.%s.%s-%s.%s' % (device, rom, version, date)
 
                 download_url = localstore.get_file(filename)
@@ -100,12 +102,12 @@ class DeltaHandler(webapp2.RequestHandler):
             req = json.loads(self.request.body)
 
             # pawitp.i9082.cm-12.20141216
-            vendor, device, rom, date = req['source_incremental'].split(".")
-            target_date = req['target_incremental'].split(".")[3]
+            vendor, device, rom, date = backend.extract_version(req['source_incremental'])
+            target_date = backend.extract_version(req['target_incremental'])[3]
             target_file = "%s-%s_from_%s_delta-UNOFFICIAL-%s.zip" % (rom, target_date, date, device)
             logging.info("Looking for " + target_file)
 
-            xml_str = backend.get_folder_info(device)
+            xml_str = backend.get_folder_info(device, rom)
             xml = ElementTree.ElementTree(ElementTree.fromstring(xml_str))
             info = {}
             for f in xml.findall(".//file_info"):
