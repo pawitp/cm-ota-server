@@ -70,14 +70,15 @@ class ApiHandler(webapp2.RequestHandler):
                 rom, version, date, channel, device = filename.strip(".zip").split("-")
                 version = version.replace(".", "-")
                 build_id = 'pawitp.%s.%s-%s.%s' % (device, rom, version, date)
+                rom_version = "%s-%s" % (rom, version)
 
-                download_url = localstore.get_file(filename)
+                download_url = localstore.get_file(filename, rom_version)
                 if not download_url:
                     download_url = f.find('direct_download_url').text
 
                 info.append({
                     'incremental': build_id,
-                    'api_level': 21,
+                    'api_level': backend.api_level_from_rom(rom_version),
                     'url': download_url,
                     'timestamp': backend.timestamp_from_build_date(date),
                     'md5sum': f.find('md5sum').text,
@@ -118,7 +119,7 @@ class DeltaHandler(webapp2.RequestHandler):
                 md5sum = f.find('md5sum').text
 
                 # Check local GCS bucket
-                download_url = localstore.get_file(filename)
+                download_url = localstore.get_file(filename, rom)
                 if not download_url:
                     download_url = f.find('direct_download_url').text
 

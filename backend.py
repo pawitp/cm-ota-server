@@ -56,3 +56,12 @@ def _fetch_memcache(url):
 
 def timestamp_from_build_date(build_date):
     return datetime.strptime(build_date, "%Y%m%d").strftime("%s")
+
+
+def api_level_from_rom(rom):
+    if rom == "cm-12":
+        return 21
+    elif rom == "cm-12-1":
+        return 22
+    else:
+        raise Exception("Unknown version")
