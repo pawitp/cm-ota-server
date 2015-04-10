@@ -105,7 +105,7 @@ class DeltaHandler(webapp2.RequestHandler):
             # pawitp.i9082.cm-12.20141216
             vendor, device, rom, date = backend.extract_version(req['source_incremental'])
             target_date = backend.extract_version(req['target_incremental'])[3]
-            target_file = "%s-%s_from_%s_delta-UNOFFICIAL-%s.zip" % (rom, target_date, date, device)
+            target_file = "%s-%s_from_%s_delta-UNOFFICIAL-%s.zip" % (backend.get_rom_filename(rom), target_date, date, device)
             logging.info("Looking for " + target_file)
 
             xml_str = backend.get_folder_info(device, rom)

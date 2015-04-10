@@ -18,6 +18,14 @@ def extract_version(rev):
     return vendor, device, rom, date
 
 
+def get_rom_filename(rom):
+    if rom == "cm-12":
+        return "cm-12"
+    elif rom == "cm-12-1":
+        return "cm-12.1"
+    raise Exception("Unknown version")
+
+
 def get_folder_info(device, rom):
     if device != "i9082":
         raise Exception("Unknown device")
