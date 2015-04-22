@@ -24,7 +24,7 @@ class ChangelogHandler(webapp2.RequestHandler):
             date_found = False
 
             start_str = '<font size="5"><b>Changelog</b></font><br />'
-            end_str = '<font size="5"><b>FAQ</b></font><br />'
+            end_str = 'For CM changelog'
             changelog = thread[thread.index(start_str) + len(start_str):thread.index(end_str)]
             changelog = changelog.replace("\n", "")
             changelog = changelog.replace("\r", "")
