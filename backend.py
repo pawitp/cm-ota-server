@@ -1,7 +1,9 @@
 from datetime import datetime
 import logging
 import urllib2
+
 from google.appengine.api import memcache
+from lxml import html
 
 MEMCACHE_TIMEOUT = 20 * 60  # 20 minutes
 
@@ -31,11 +33,34 @@ def get_folder_info(device, rom):
         raise Exception("Unknown device")
 
     if rom == "cm-12":
-        return _fetch_memcache('http://d-h.st/api/folder/content?folder_id=41223')
+        return get_and_parse_folder_info('https://basketbuild.com/devs/pawitp/i9082_cm12.0/')
     elif rom == "cm-12-1":
-        return _fetch_memcache('http://d-h.st/api/folder/content?folder_id=44634')
+        return get_and_parse_folder_info('https://basketbuild.com/devs/pawitp/i9082_cm12.1/')
     else:
         raise Exception("Unknown version")
+
+
+def get_and_parse_folder_info(url):
+    cache_key = "folder:%s" % url
+    data = memcache.get(cache_key)
+    if data:
+        return data
+
+    logging.info("Fetching:" + url)
+    data = urllib2.urlopen(url).read()
+
+    tree = html.fromstring(data)
+    info = []
+    for f in tree.cssselect('[itemtype="http://schema.org/SoftwareApplication"]'):
+        # Note: URL for basketbuild doesn't actually work. We assume that localstore will always return a value.
+        info.append({
+            'filename': f.cssselect("[itemprop=name]")[0].text_content().strip(),
+            'md5sum': f.cssselect("[data-toggle='popover']")[0].attrib['data-content'],
+            'url': f.cssselect("[itemprop=downloadUrl]")[0].attrib['href']
+        })
+
+    memcache.add(key=cache_key, value=info, time=MEMCACHE_TIMEOUT)
+    return info
 
 
 def get_thread(device, rom):

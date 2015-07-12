@@ -2,8 +2,9 @@
 import json
 import logging
 import os
+
 import webapp2
-from xml.etree import ElementTree
+
 import backend
 import localstore
 
@@ -57,11 +58,10 @@ class ApiHandler(webapp2.RequestHandler):
                 raise Exception("Unknown method")
 
             vendor, device, rom, date = backend.extract_version(req['params']['source_incremental'])
-            xml_str = backend.get_folder_info(device, rom)
-            xml = ElementTree.ElementTree(ElementTree.fromstring(xml_str))
+            folder_info = backend.get_folder_info(device, rom)
             info = []
-            for f in xml.findall(".//file_info"):
-                filename = f.find('filename').text
+            for f in folder_info:
+                filename = f['filename']
                 if not filename.startswith("cm-12"):
                     continue
                 if "delta" in filename:
@@ -74,14 +74,14 @@ class ApiHandler(webapp2.RequestHandler):
 
                 download_url = localstore.get_file(filename, rom_version)
                 if not download_url:
-                    download_url = f.find('direct_download_url').text
+                    download_url = f['url']
 
                 info.append({
                     'incremental': build_id,
                     'api_level': backend.api_level_from_rom(rom_version),
                     'url': download_url,
                     'timestamp': backend.timestamp_from_build_date(date),
-                    'md5sum': f.find('md5sum').text,
+                    'md5sum': f['md5sum'],
                     'changes': 'https://%s/changelog/%s' % (os.environ['HTTP_HOST'], build_id),
                     'channel': 'nightly',
                     'filename': filename,
@@ -108,27 +108,24 @@ class DeltaHandler(webapp2.RequestHandler):
             target_file = "%s-%s_from_%s_delta-UNOFFICIAL-%s.zip" % (backend.get_rom_filename(rom), target_date, date, device)
             logging.info("Looking for " + target_file)
 
-            xml_str = backend.get_folder_info(device, rom)
-            xml = ElementTree.ElementTree(ElementTree.fromstring(xml_str))
+            folder_info = backend.get_folder_info(device, rom)
             info = {}
-            for f in xml.findall(".//file_info"):
-                filename = f.find('filename').text
+            for f in folder_info:
+                filename = f['filename']
                 if filename != target_file:
                     continue
-
-                md5sum = f.find('md5sum').text
 
                 # Check local GCS bucket
                 download_url = localstore.get_file(filename, rom)
                 if not download_url:
-                    download_url = f.find('direct_download_url').text
+                    download_url = f['url']
 
                 logging.info("Returning: " + download_url)
 
                 info = {
                     'filename': filename,
                     'download_url': download_url,
-                    'md5sum': md5sum,
+                    'md5sum': f['md5sum'],
                     'date_created_unix': backend.timestamp_from_build_date(target_date),
                     'incremental': req['target_incremental'],
                 }
