@@ -55,12 +55,28 @@ def get_and_parse_folder_info(url):
         # Note: URL for basketbuild doesn't actually work. We assume that localstore will always return a value.
         info.append({
             'filename': f.cssselect("[itemprop=name]")[0].text_content().strip(),
-            'md5sum': f.cssselect("[data-toggle='popover']")[0].attrib['data-content'],
+            'md5sum': get_md5sum("https://basketbuild.com" + f.cssselect("[itemprop=downloadUrl]")[0].get('href')),
             'url': f.cssselect("[itemprop=downloadUrl]")[0].attrib['href']
         })
 
     memcache.add(key=cache_key, value=info, time=MEMCACHE_TIMEOUT)
     return info
+
+
+def get_md5sum(url):
+    cache_key = "md5:%s" % url
+    data = memcache.get(cache_key)
+    if data:
+        return data
+
+    logging.info("Fetching:" + url)
+    data = urllib2.urlopen(url).read()
+
+    tree = html.fromstring(data)
+    md5 = tree.xpath("normalize-space((//*[text() = 'File MD5:']/following-sibling::text())[1])")
+
+    memcache.add(key=cache_key, value=md5)
+    return md5
 
 
 def get_thread(device, rom):
